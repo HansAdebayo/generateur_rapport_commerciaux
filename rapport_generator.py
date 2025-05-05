@@ -73,10 +73,12 @@ def charger_donnees(excel_path, mois_cible, annee_cible):
         data_by_part[titre] = dict(tuple(df_filtre.groupby(col_com)))
     return data_by_part
 
-def ajouter_logo_et_titre(doc, nom, date_obj):
+def ajouter_logo_et_titre(doc, logo_path, nom, date_obj):
     header = doc.sections[0].header
     p = header.paragraphs[0]
-    p.add_run(f"Compte rendu du {date_obj.strftime('%B %Y')} - Réunion commerciale {nom}")
+    if logo_path and os.path.exists(logo_path):
+        p.add_run().add_picture(logo_path, width=Inches(1.5))
+    p.add_run(f"   Compte rendu du {date_obj.strftime('%d %B %Y')} OBJET : réunion périodique commerciale {nom}")
     p.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
 
 def ajouter_statistiques_mensuelles(doc, titre, df, mois, annee):
@@ -162,7 +164,7 @@ def plot_puissance(excel_path, sheet_name, commercial, output_path):
     plt.savefig(output_path)
     plt.close()
 
-def ajouter_section(doc, excel_path, titre, df, graphique, commercial, mois, annee):
+def ajouter_section(doc, excel_path, titre, df, graphique, commercial, mois, annee, img_dir):
     doc.add_page_break()
     doc.add_heading(titre, level=2)
     ajouter_statistiques_mensuelles(doc, titre, df, mois, annee)
@@ -171,22 +173,22 @@ def ajouter_section(doc, excel_path, titre, df, graphique, commercial, mois, ann
     if graphique:
         sheet = next((s for t, s, g in PARTIES if t == titre), None)
         if sheet:
-            img_nb = f"{sanitize_filename(commercial)}_{sanitize_filename(titre)}.png"
+            img_nb = os.path.join(img_dir, f"{sanitize_filename(commercial)}_{sanitize_filename(titre)}.png")
             creer_graphique_global(excel_path, sheet, commercial, img_nb)
             if os.path.exists(img_nb):
                 doc.add_picture(img_nb, width=Inches(5))
                 os.remove(img_nb)
-            img_p = f"{sanitize_filename(commercial)}_{sanitize_filename(titre)}_puissance.png"
+            img_p = os.path.join(img_dir, f"{sanitize_filename(commercial)}_{sanitize_filename(titre)}_puissance.png")
             plot_puissance(excel_path, sheet, commercial, img_p)
             if os.path.exists(img_p):
                 doc.add_picture(img_p, width=Inches(5))
                 os.remove(img_p)
 
-def creer_rapport(commercial, data_by_part, mois, annee, output_dir, excel_path):
+def creer_rapport(commercial, data_by_part, mois, annee, output_dir, excel_path, logo_path, img_dir):
     doc = Document()
-    ajouter_logo_et_titre(doc, commercial, datetime(annee, mois, 1))
+    ajouter_logo_et_titre(doc, logo_path, commercial, datetime(annee, mois, 1))
     for titre, _, graphique in PARTIES:
         if commercial in data_by_part.get(titre, {}):
-            ajouter_section(doc, excel_path, titre, data_by_part[titre][commercial], graphique, commercial, mois, annee)
+            ajouter_section(doc, excel_path, titre, data_by_part[titre][commercial], graphique, commercial, mois, annee, img_dir)
     filename = f"{output_dir}/Rapport_Commercial_{sanitize_filename(commercial)}_{mois:02d}_{annee}.docx"
     doc.save(filename)

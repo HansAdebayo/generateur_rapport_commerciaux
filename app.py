@@ -14,6 +14,7 @@ st.set_page_config(page_title="Générateur de rapports commerciaux", layout="ce
 st.title("📊 Générateur de rapports commerciaux")
 
 uploaded_file = st.file_uploader("📁 Importer le fichier Excel", type=["xlsx"])
+uploaded_logo = st.file_uploader("🖼️ Importer le logo (facultatif)", type=["png", "jpg", "jpeg"])
 
 col1, col2 = st.columns(2)
 with col1:
@@ -25,26 +26,30 @@ if uploaded_file:
     if st.button("🚀 Générer les rapports"):
         with st.spinner("Génération des rapports en cours..."):
 
-            # Créer répertoire temporaire
-            temp_dir = tempfile.mkdtemp()
-            excel_path = os.path.join(temp_dir, "data.xlsx")
-            with open(excel_path, "wb") as f:
-                f.write(uploaded_file.read())
+            with tempfile.TemporaryDirectory() as temp_dir:
+                excel_path = os.path.join(temp_dir, "data.xlsx")
+                with open(excel_path, "wb") as f:
+                    f.write(uploaded_file.read())
 
-            # Répertoire de sortie
-            output_dir = os.path.join(temp_dir, "rapports")
-            os.makedirs(output_dir, exist_ok=True)
+                logo_path = None
+                if uploaded_logo:
+                    logo_path = os.path.join(temp_dir, uploaded_logo.name)
+                    with open(logo_path, "wb") as f:
+                        f.write(uploaded_logo.read())
 
-            # Charger les données et générer les rapports
-            data = charger_donnees(excel_path, mois, annee)
-            if data:
-                commerciaux = list(data[next(iter(data))].keys())
-                for com in commerciaux:
-                    creer_rapport(com, data, mois, annee, output_dir, excel_path)
+                output_dir = os.path.join(temp_dir, "rapports")
+                img_dir = os.path.join(temp_dir, "images")
+                os.makedirs(output_dir, exist_ok=True)
+                os.makedirs(img_dir, exist_ok=True)
 
-                # Zipper les fichiers
-                zip_path = shutil.make_archive(os.path.join(temp_dir, "Rapports_Commerciaux"), 'zip', output_dir)
-                st.success("✅ Rapport généré avec succès.")
-                st.download_button("📥 Télécharger le fichier ZIP", open(zip_path, "rb"), file_name="Rapports_Commerciaux.zip")
-            else:
-                st.warning("Aucune donnée trouvée pour les filtres choisis.")
+                data = charger_donnees(excel_path, mois, annee)
+                if data:
+                    commerciaux = list(data[next(iter(data))].keys())
+                    for com in commerciaux:
+                        creer_rapport(com, data, mois, annee, output_dir, excel_path, logo_path, img_dir)
+
+                    zip_path = shutil.make_archive(os.path.join(temp_dir, "Rapports_Commerciaux"), 'zip', output_dir)
+                    st.success("✅ Rapport généré avec succès.")
+                    st.download_button("📥 Télécharger le fichier ZIP", open(zip_path, "rb"), file_name="Rapports_Commerciaux.zip")
+                else:
+                    st.warning("Aucune donnée trouvée pour les filtres choisis.")
