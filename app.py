@@ -4,9 +4,11 @@ from datetime import datetime
 import tempfile
 import os
 import shutil
-from rapport_generator import (
-    sanitize_filename, charger_donnees, creer_rapport,
-    COMMERCIAUX_CIBLES, PARTIES
+from rapport_generator import  (
+    COMMERCIAUX_CIBLES,
+    PARTIES,
+    charger_donnees,
+    creer_rapport
 )
 
 st.set_page_config(page_title="Générateur de rapports commerciaux", layout="centered")
