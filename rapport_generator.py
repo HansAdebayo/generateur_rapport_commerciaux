@@ -75,12 +75,17 @@ def charger_donnees(excel_path, mois_cible, annee_cible, jour_debut=None, jour_f
         data_by_part[titre] = dict(tuple(df_filtre.groupby(col_com)))
     return data_by_part
 
-def ajouter_logo_et_titre(doc, logo_path, nom, date_obj, jour_debut, jour_fin):
+def ajouter_logo_et_titre(doc, logo_path, nom, date_obj, jour_debut=None, jour_fin=None):
     header = doc.sections[0].header
     p = header.paragraphs[0]
-    if logo_path and os.path.exists(logo_path):
-        p.add_run().add_picture(logo_path, width=Inches(1.5))
-    p.add_run(f"   Compte rendu du {jour_debut} au {jour_fin} {date_obj.strftime('%B %Y')} – Réunion commerciale {nom}")
+    try:
+        if logo_path and os.path.isfile(logo_path):
+            p.add_run().add_picture(logo_path, width=Inches(1.5))
+    except Exception as e:
+        print(f"⚠️ Erreur lors de l'insertion du logo : {e}")
+    
+    titre_periode = f"du {jour_debut} au {jour_fin} {date_obj.strftime('%B %Y')}" if jour_debut and jour_fin else date_obj.strftime('%B %Y')
+    p.add_run(f"   Compte rendu {titre_periode} – Réunion commerciale {nom}")
     p.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
 
 def ajouter_statistiques_mensuelles(doc, titre, df, mois, annee):
