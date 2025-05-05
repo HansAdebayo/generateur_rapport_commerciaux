@@ -76,6 +76,20 @@ def charger_donnees(excel_path, mois_cible, annee_cible, jour_debut=None, jour_f
         data_by_part[titre] = dict(tuple(df_filtre.groupby(col_com)))
     return data_by_part
 
+def ajouter_page_de_garde(doc, nom_commercial, jour_debut, jour_fin, mois, annee, logo_path=None):
+    doc.add_paragraph()
+    if logo_path and os.path.exists(logo_path):
+        doc.add_picture(logo_path, width=Inches(2))
+    doc.add_heading("RAPPORT COMMERCIAL", level=0)
+    doc.add_paragraph(f"Entreprise : Watt&Co Ingénierie")
+    doc.add_paragraph(f"Commercial : {nom_commercial}")
+    doc.add_paragraph(f"Période : du {jour_debut} au {jour_fin} {datetime(annee, mois, 1).strftime('%B')} {annee}")
+    doc.add_paragraph("Contenu du rapport :")
+    for titre, _, _ in PARTIES:
+        doc.add_paragraph(f"• {titre}", style="List Bullet")
+    doc.add_page_break()
+
+
 def ajouter_logo_et_titre(doc, logo_path, nom, jour_debut, jour_fin, mois, annee):
     header = doc.sections[0].header
     p = header.paragraphs[0]
@@ -192,9 +206,12 @@ def ajouter_section(doc, excel_path, titre, df, graphique, commercial, mois, ann
 
 def creer_rapport(commercial, data_by_part, mois, annee, jour_debut, jour_fin, output_dir, excel_path, logo_path, img_dir):
     doc = Document()
-    ajouter_logo_et_titre(doc, logo_path, commercial, jour_debut, jour_fin, mois, annee)
+    ajouter_page_de_garde(doc, commercial, jour_debut, jour_fin, mois, annee, logo_path)
+    ajouter_logo_et_titre(doc, logo_path, commercial, datetime(annee, mois, 1), jour_debut, jour_fin)
     for titre, _, graphique in PARTIES:
         if commercial in data_by_part.get(titre, {}):
-            ajouter_section(doc, excel_path, titre, data_by_part[titre][commercial], graphique, commercial, mois, annee, jour_debut, jour_fin, img_dir)
+            titre_complet = f"{titre} du {jour_debut} au {jour_fin} {datetime(annee, mois, 1).strftime('%B')} {annee}"
+            ajouter_section(doc, excel_path, titre_complet, data_by_part[titre][commercial], graphique, commercial, mois, annee, jour_debut, jour_fin, img_dir)
+    os.makedirs(output_dir, exist_ok=True)
     filename = f"{output_dir}/Rapport_Commercial_{sanitize_filename(commercial)}_{mois:02d}_{annee}.docx"
     doc.save(filename)
