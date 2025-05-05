@@ -85,12 +85,9 @@ def ajouter_logo_et_titre(doc, logo_path, nom, date_obj):
 
 def ajouter_statistiques_mensuelles(doc, titre, df, mois, annee):
     para = doc.add_paragraph()
-    para.add_run(f"Année : {annee}
-").bold = True
-    para.add_run(f"Mois : {mois}
-").bold = True
-    para.add_run(f"Nombre de {titre.lower()} : {len(df)}
-").bold = True
+    para.add_run(f"Année : {annee}").bold = True
+    para.add_run(f"Mois : {mois}").bold = True
+    para.add_run(f"Nombre de {titre.lower()} : {len(df)}").bold = True
     col_puissance = detect_column(df.columns, 'puissance')
     if col_puissance:
         total_puissance = df[col_puissance].sum()
