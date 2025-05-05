@@ -47,7 +47,7 @@ def convert_mois_to_int(val):
     }
     return mois_dict.get(val, None)
 
-def charger_donnees(excel_path, mois_cible, annee_cible):
+def charger_donnees(excel_path, mois_cible, annee_cible, jour_debut=None, jour_fin=None):
     xls = pd.ExcelFile(excel_path)
     data_by_part = {}
 
@@ -66,6 +66,9 @@ def charger_donnees(excel_path, mois_cible, annee_cible):
 
         df[col_mois] = df[col_mois].apply(convert_mois_to_int)
         df_filtre = df[(df[col_annee] == annee_cible) & (df[col_mois] == mois_cible)]
+        col_jour = detect_column(df.columns, 'jour')
+        if col_jour and jour_debut and jour_fin:
+            df_filtre = df_filtre[(df_filtre[col_jour] >= jour_debut) & (df_filtre[col_jour] <= jour_fin)]
         df_filtre = df_filtre[df_filtre[col_com].str.contains('|'.join(COMMERCIAUX_CIBLES), case=False, na=False)]
         if df_filtre.empty:
             continue
