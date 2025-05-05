@@ -1,4 +1,3 @@
-
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -86,9 +85,12 @@ def ajouter_logo_et_titre(doc, logo_path, nom, date_obj):
 
 def ajouter_statistiques_mensuelles(doc, titre, df, mois, annee):
     para = doc.add_paragraph()
-    para.add_run(f"Année : {annee}\n").bold = True
-    para.add_run(f"Mois : {mois}\n").bold = True
-    para.add_run(f"Nombre de {titre.lower()} : {len(df)}\n").bold = True
+    para.add_run(f"Année : {annee}
+").bold = True
+    para.add_run(f"Mois : {mois}
+").bold = True
+    para.add_run(f"Nombre de {titre.lower()} : {len(df)}
+").bold = True
     col_puissance = detect_column(df.columns, 'puissance')
     if col_puissance:
         total_puissance = df[col_puissance].sum()
@@ -172,11 +174,9 @@ def ajouter_section(doc, excel_path, titre, df, graphique, commercial, mois, ann
     mois_nom = datetime(annee, mois, 1).strftime('%B')
     titre_complet = f"{titre} du {jour_debut} au {jour_fin} {mois_nom} {annee}"
     doc.add_heading(titre_complet, level=2)
-
     ajouter_statistiques_mensuelles(doc, titre, df, mois, annee)
     ajouter_tableau(doc, df, exclure=['lien'])
     doc.add_paragraph()
-
     if graphique:
         sheet = next((s for t, s, g in PARTIES if t == titre), None)
         if sheet:
@@ -191,11 +191,11 @@ def ajouter_section(doc, excel_path, titre, df, graphique, commercial, mois, ann
                 doc.add_picture(img_p, width=Inches(5))
                 os.remove(img_p)
 
-def creer_rapport(commercial, data_by_part, mois, annee, output_dir, excel_path, logo_path, img_dir):
+def creer_rapport(commercial, data_by_part, mois, annee, jour_debut, jour_fin, output_dir, excel_path, logo_path, img_dir):
     doc = Document()
     ajouter_logo_et_titre(doc, logo_path, commercial, datetime(annee, mois, 1))
     for titre, _, graphique in PARTIES:
         if commercial in data_by_part.get(titre, {}):
-            ajouter_section(doc, excel_path, titre, data_by_part[titre][commercial], graphique, commercial, mois, annee, img_dir)
+            ajouter_section(doc, excel_path, titre, data_by_part[titre][commercial], graphique, commercial, mois, annee, jour_debut, jour_fin, img_dir)
     filename = f"{output_dir}/Rapport_Commercial_{sanitize_filename(commercial)}_{mois:02d}_{annee}.docx"
     doc.save(filename)
