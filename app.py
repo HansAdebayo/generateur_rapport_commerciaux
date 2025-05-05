@@ -4,7 +4,7 @@ from datetime import datetime
 import tempfile
 import os
 import shutil
-from rapport_generator import (
+from rapport_generator_jours import (
     sanitize_filename, charger_donnees, creer_rapport,
     COMMERCIAUX_CIBLES, PARTIES
 )
@@ -21,6 +21,12 @@ with col1:
     mois = st.selectbox("📅 Mois", list(range(1, 13)), index=datetime.now().month - 1)
 with col2:
     annee = st.selectbox("📆 Année", list(range(2022, 2026)), index=3)
+
+col3, col4 = st.columns(2)
+with col3:
+    jour_debut = st.number_input("📍 Jour de début", min_value=1, max_value=31, value=1)
+with col4:
+    jour_fin = st.number_input("📍 Jour de fin", min_value=1, max_value=31, value=31)
 
 if uploaded_file:
     if st.button("🚀 Générer les rapports"):
@@ -42,7 +48,7 @@ if uploaded_file:
                 os.makedirs(output_dir, exist_ok=True)
                 os.makedirs(img_dir, exist_ok=True)
 
-                data = charger_donnees(excel_path, mois, annee)
+                data = charger_donnees(excel_path, mois, annee, jour_debut, jour_fin)
                 if data:
                     commerciaux = list(data[next(iter(data))].keys())
                     for com in commerciaux:
