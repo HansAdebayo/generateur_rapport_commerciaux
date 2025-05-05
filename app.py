@@ -10,6 +10,7 @@ from rapport_generator import (
 )
 
 st.set_page_config(page_title="Générateur de rapports commerciaux", layout="centered")
+
 st.title("📊 Générateur de rapports commerciaux")
 
 uploaded_file = st.file_uploader("📁 Importer le fichier Excel", type=["xlsx"])
@@ -30,6 +31,7 @@ with col4:
 if uploaded_file:
     if st.button("🚀 Générer les rapports"):
         with st.spinner("Génération des rapports en cours..."):
+
             with tempfile.TemporaryDirectory() as temp_dir:
                 excel_path = os.path.join(temp_dir, "data.xlsx")
                 with open(excel_path, "wb") as f:
@@ -51,6 +53,7 @@ if uploaded_file:
                     commerciaux = list(data[next(iter(data))].keys())
                     for com in commerciaux:
                         creer_rapport(com, data, mois, annee, jour_debut, jour_fin, output_dir, excel_path, logo_path, img_dir)
+
 
                     zip_path = shutil.make_archive(os.path.join(temp_dir, "Rapports_Commerciaux"), 'zip', output_dir)
                     st.success("✅ Rapport généré avec succès.")
