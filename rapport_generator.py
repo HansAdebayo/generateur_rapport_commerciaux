@@ -207,7 +207,7 @@ def ajouter_section(doc, excel_path, titre, df, graphique, commercial, mois, ann
 def creer_rapport(commercial, data_by_part, mois, annee, jour_debut, jour_fin, output_dir, excel_path, logo_path, img_dir):
     doc = Document()
     ajouter_page_de_garde(doc, commercial, jour_debut, jour_fin, mois, annee, logo_path)
-    ajouter_logo_et_titre(doc, logo_path, commercial, datetime(annee, mois, 1), jour_debut, jour_fin)
+    ajouter_logo_et_titre(doc, logo_path, commercial, jour_debut, jour_fin, mois, annee)
     for titre, _, graphique in PARTIES:
         if commercial in data_by_part.get(titre, {}):
             titre_complet = f"{titre} du {jour_debut} au {jour_fin} {datetime(annee, mois, 1).strftime('%B')} {annee}"
