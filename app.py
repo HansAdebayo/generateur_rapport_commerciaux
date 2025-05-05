@@ -4,7 +4,7 @@ from datetime import datetime
 import tempfile
 import os
 import shutil
-from rapport_generator_jours import (
+from rapport_generator import (
     sanitize_filename, charger_donnees, creer_rapport,
     COMMERCIAUX_CIBLES, PARTIES
 )
