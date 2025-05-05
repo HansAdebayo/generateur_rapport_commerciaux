@@ -126,7 +126,7 @@ def creer_graphique_global(excel_path, sheet, commercial, img_path):
 def plot_puissance(excel_path, sheet_name, commercial, output_path):
     return
 
-def ajouter_section(doc, excel_path, titre, df, graphique, commercial, mois, annee, jour_debut, jour_fin, img_dir):
+def ajouter_section(doc, excel_path, titre, df, graphique, commercial, mois, annee, img_dir, jour_debut=None, jour_fin=None):
     doc.add_page_break()
     titre_perso = f"{titre} du {jour_debut} au {jour_fin} {datetime(1900, mois, 1).strftime('%B')} {annee}"
     doc.add_heading(titre_perso, level=2)
