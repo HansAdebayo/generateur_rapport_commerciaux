@@ -5,10 +5,9 @@ import tempfile
 import os
 import shutil
 from rapport_generator import (
-    sanitize_filename, normalize, detect_column, convert_mois_to_int,
-    PARTIES, COMMERCIAUX_CIBLES, charger_donnees, creer_rapport
+    sanitize_filename, charger_donnees, creer_rapport,
+    COMMERCIAUX_CIBLES, PARTIES
 )
-import pandas as pd
 
 st.set_page_config(page_title="Générateur de rapports commerciaux", layout="centered")
 
@@ -41,7 +40,7 @@ if uploaded_file:
             if data:
                 commerciaux = list(data[next(iter(data))].keys())
                 for com in commerciaux:
-                    creer_rapport(com, data, mois, annee, output_dir)
+                    creer_rapport(com, data, mois, annee, output_dir, excel_path)
 
                 # Zipper les fichiers
                 zip_path = shutil.make_archive(os.path.join(temp_dir, "Rapports_Commerciaux"), 'zip', output_dir)

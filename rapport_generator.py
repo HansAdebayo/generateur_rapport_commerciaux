@@ -111,10 +111,21 @@ def ajouter_tableau(doc, df, exclure=[]):
             row_cells[i].paragraphs[0].runs[0].font.size = Pt(7)
             row_cells[i].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
 
-def creer_graphique_global(titre, df, mois_col, commercial, img_path):
-    if df.empty:
+def creer_graphique_global(excel_path, sheet, commercial, img_path):
+    df = pd.read_excel(excel_path, sheet_name=sheet)
+    col_mois = detect_column(df.columns, 'mois')
+    col_annee = detect_column(df.columns, 'annee')
+    col_com = detect_column(df.columns, 'commercial')
+
+    if not col_mois or not col_annee or not col_com:
         return
-    counts = df.groupby(df[mois_col]).size().reindex(range(1, 13), fill_value=0)
+
+    df[col_mois] = df[col_mois].apply(convert_mois_to_int)
+    df_filtre = df[(df[col_annee] == datetime.now().year) & (df[col_com].str.contains(commercial, case=False, na=False))]
+    if df_filtre.empty:
+        return
+
+    counts = df_filtre.groupby(df_filtre[col_mois]).size().reindex(range(1, 13), fill_value=0)
     months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc']
     plt.figure(figsize=(6, 3))
     plt.bar(months, counts.values, color="#4F81BD")
@@ -125,25 +136,57 @@ def creer_graphique_global(titre, df, mois_col, commercial, img_path):
     plt.savefig(img_path)
     plt.close()
 
-def ajouter_section(doc, titre, df, graphique, commercial, mois, annee):
+def plot_puissance(excel_path, sheet_name, commercial, output_path):
+    df = pd.read_excel(excel_path, sheet_name=sheet_name)
+    col_mois = detect_column(df.columns, 'mois')
+    col_annee = detect_column(df.columns, 'annee')
+    col_com = detect_column(df.columns, 'commercial')
+    col_puissance = detect_column(df.columns, 'puissance')
+
+    if not col_mois or not col_annee or not col_com or not col_puissance:
+        return
+
+    df[col_mois] = df[col_mois].apply(convert_mois_to_int)
+    df_filtre = df[(df[col_annee] == datetime.now().year) & (df[col_com].str.contains(commercial, case=False, na=False))]
+    if df_filtre.empty:
+        return
+
+    puissances = df_filtre.groupby(df_filtre[col_mois])[col_puissance].sum().reindex(range(1, 13), fill_value=0)
+    mois_labels = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc']
+    plt.figure(figsize=(6, 3))
+    plt.plot(mois_labels, puissances.values, marker='o', color='green', linewidth=2)
+    plt.title(f"Puissance mensuelle – {commercial}")
+    plt.xlabel('Mois')
+    plt.ylabel('Puissance (kWc)')
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
+
+def ajouter_section(doc, excel_path, titre, df, graphique, commercial, mois, annee):
     doc.add_page_break()
     doc.add_heading(titre, level=2)
     ajouter_statistiques_mensuelles(doc, titre, df, mois, annee)
     ajouter_tableau(doc, df, exclure=['lien'])
     doc.add_paragraph()
     if graphique:
-        mois_col = detect_column(df.columns, 'mois')
-        img_nb = f"{sanitize_filename(commercial)}_{sanitize_filename(titre)}.png"
-        creer_graphique_global(titre, df, mois_col, commercial, img_nb)
-        if os.path.exists(img_nb):
-            doc.add_picture(img_nb, width=Inches(5))
-            os.remove(img_nb)
+        sheet = next((s for t, s, g in PARTIES if t == titre), None)
+        if sheet:
+            img_nb = f"{sanitize_filename(commercial)}_{sanitize_filename(titre)}.png"
+            creer_graphique_global(excel_path, sheet, commercial, img_nb)
+            if os.path.exists(img_nb):
+                doc.add_picture(img_nb, width=Inches(5))
+                os.remove(img_nb)
+            img_p = f"{sanitize_filename(commercial)}_{sanitize_filename(titre)}_puissance.png"
+            plot_puissance(excel_path, sheet, commercial, img_p)
+            if os.path.exists(img_p):
+                doc.add_picture(img_p, width=Inches(5))
+                os.remove(img_p)
 
-def creer_rapport(nom, data_by_part, mois, annee, output_dir):
+def creer_rapport(commercial, data_by_part, mois, annee, output_dir, excel_path):
     doc = Document()
-    ajouter_logo_et_titre(doc, nom, datetime(annee, mois, 1))
+    ajouter_logo_et_titre(doc, commercial, datetime(annee, mois, 1))
     for titre, _, graphique in PARTIES:
-        if nom in data_by_part.get(titre, {}):
-            ajouter_section(doc, titre, data_by_part[titre][nom], graphique, nom, mois, annee)
-    filename = f"{output_dir}/Rapport_Commercial_{sanitize_filename(nom)}_{mois:02d}_{annee}.docx"
+        if commercial in data_by_part.get(titre, {}):
+            ajouter_section(doc, excel_path, titre, data_by_part[titre][commercial], graphique, commercial, mois, annee)
+    filename = f"{output_dir}/Rapport_Commercial_{sanitize_filename(commercial)}_{mois:02d}_{annee}.docx"
     doc.save(filename)
