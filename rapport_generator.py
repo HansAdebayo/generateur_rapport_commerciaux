@@ -133,11 +133,14 @@ def ajouter_section(doc, excel_path, titre, df, graphique, commercial, mois, ann
     ajouter_statistiques_mensuelles(doc, titre, df, mois, annee)
     ajouter_tableau(doc, df, exclure=['lien'])
 
-def creer_rapport(commercial, data_by_part, mois, annee, output_dir, excel_path, logo_path, img_dir, jour_debut, jour_fin):
+def creer_rapport(commercial, data_by_part, mois, annee, output_dir, excel_path, logo_path, img_dir, jour_debut=None, jour_fin=None):
     doc = Document()
     ajouter_logo_et_titre(doc, logo_path, commercial, datetime(annee, mois, 1), jour_debut, jour_fin)
+    
     for titre, _, graphique in PARTIES:
         if commercial in data_by_part.get(titre, {}):
-            ajouter_section(doc, excel_path, titre, data_by_part[titre][commercial], graphique, commercial, mois, annee, jour_debut, jour_fin, img_dir)
+            ajouter_section(doc, excel_path, titre, data_by_part[titre][commercial], graphique, commercial, mois, annee, img_dir)
+
+    os.makedirs(output_dir, exist_ok=True)  # <- ajoute cette ligne
     filename = f"{output_dir}/Rapport_Commercial_{sanitize_filename(commercial)}_{mois:02d}_{annee}.docx"
     doc.save(filename)
